@@ -29,7 +29,13 @@ target_compile_options(
           -fvisibility=hidden
           -fno-builtin)
 
-add_executable(app src/main.c)
+add_executable(
+  app
+  src/main.c
+  src/counter.c
+  src/range.c
+  src/ball.c
+  src/snake.c)
 target_link_libraries(app PRIVATE aulib_wasm)
 
 target_compile_options(

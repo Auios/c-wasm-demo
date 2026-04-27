@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>aulib-wasm — C to WebAssembly</title>
+    <title>C WASM Demo</title>
     <style>
       :root {
         --bg: #0a0e14;
@@ -31,7 +31,8 @@
         font-family: var(--font);
         color: var(--text);
         background: var(--bg);
-        background-image: radial-gradient(
+        background-image:
+          radial-gradient(
             ellipse 120% 80% at 50% -30%,
             rgba(57, 208, 217, 0.12),
             transparent 50%
@@ -138,7 +139,10 @@
         padding: 0.5rem 0.9rem;
         color: var(--text);
         background: var(--surface-2);
-        transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          transform 0.1s;
       }
 
       button:hover {
@@ -233,30 +237,46 @@
         color: var(--muted);
       }
 
-      .foot {
-        margin-top: 2rem;
-        text-align: center;
-        font-size: 0.8rem;
+      canvas {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        background: #050810;
+        border: 1px solid var(--border);
+        image-rendering: pixelated;
+      }
+
+      .canvas-wrap {
+        margin: 0 auto;
+      }
+
+      .canvas-narrow {
+        max-width: 320px;
+      }
+
+      .game-status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+        font-family: var(--mono);
+        font-size: 0.95rem;
         color: var(--muted);
       }
 
-      .badge {
-        display: inline-block;
-        padding: 0.15rem 0.5rem;
-        border-radius: 4px;
-        background: var(--surface-2);
-        border: 1px solid var(--border);
-        font-family: var(--mono);
-        font-size: 0.75rem;
-        color: var(--muted);
+      .game-status .score {
+        color: var(--accent);
       }
     </style>
   </head>
   <body>
     <div class="wrap">
       <header>
-        <h1>aulib-wasm</h1>
-        <p>C → WebAssembly · DOM from the host</p>
+        <h1>C WASM Demo</h1>
+        <p>by Auios</p>
         <span id="status" role="status">Loading…</span>
       </header>
 
@@ -264,30 +284,42 @@
         <section class="card" aria-labelledby="c-counter">
           <h2 id="c-counter">Counter</h2>
           <div class="row">
-            <span
-              class="stat"
-              id="tap-count"
-              aria-live="polite"
-              >0</span
-            >
+            <span class="stat" id="tap-count" aria-live="polite">0</span>
             <button type="button" class="primary" id="btn">Tap</button>
-            <button type="button" class="ghost" id="btn-reset" title="Reset count">
+            <button
+              type="button"
+              class="ghost"
+              id="btn-reset"
+              title="Reset count"
+            >
               Reset
             </button>
           </div>
-          <p class="hint">Each tap runs C code: increment + format string + set_text.</p>
+          <p class="hint">
+            Each tap runs a function defined in our C source code: increment +
+            format string + set_text.
+          </p>
         </section>
 
         <section class="card" aria-labelledby="c-math">
           <h2 id="c-math">Quick actions</h2>
           <div class="row">
-            <button type="button" id="btn-double" title="Double the count">×2</button>
+            <button type="button" id="btn-double" title="Double the count">
+              ×2
+            </button>
             <button type="button" id="btn-ten" title="Add 10">+10</button>
-            <button type="button" class="danger" id="btn-clear" title="Zero the count">
+            <button
+              type="button"
+              class="danger"
+              id="btn-clear"
+              title="Zero the count"
+            >
               Clear
             </button>
           </div>
-          <p class="hint">More click handlers, same aulib <code>on_click</code> bridge.</p>
+          <p class="hint">
+            More click handlers, same aulib <code>on_click</code> bridge.
+          </p>
         </section>
 
         <section class="card span-2" aria-labelledby="c-range">
@@ -295,10 +327,7 @@
           <div class="range-wrap">
             <div class="range-head">
               <span>Intensity (0–100)</span>
-              <span
-                class="range-readout"
-                id="range-value"
-                aria-live="polite"
+              <span class="range-readout" id="range-value" aria-live="polite"
                 >50</span
               >
             </div>
@@ -312,16 +341,43 @@
               aria-valuemax="100"
             />
             <p class="hint">
-              <code>on_input</code> + <code>get_input_int</code> keep the readout in sync.
+              <code>on_input</code> + <code>get_input_int</code> keep the
+              readout in sync.
             </p>
           </div>
         </section>
-      </div>
 
-      <p class="foot">
-        <span class="badge">wasm32-unknown-unknown</span>
-        &nbsp;·&nbsp; Built with clang &amp; aulib-wasm
-      </p>
+        <section class="card span-2" aria-labelledby="c-ball">
+          <h2 id="c-ball">Bouncing ball</h2>
+          <div class="canvas-wrap">
+            <canvas id="ball-canvas" width="480" height="180"></canvas>
+          </div>
+          <p class="hint">
+            60 fps loop: position + velocity + wall reflection, drawn
+            through <code>canvas_fill_circle</code>.
+          </p>
+        </section>
+
+        <section class="card span-2" aria-labelledby="c-snake">
+          <h2 id="c-snake">Snake</h2>
+          <div class="game-status">
+            <span id="snake-status">Press Space or click Start</span>
+            <span class="score" id="snake-score">Score: 0</span>
+          </div>
+          <div class="canvas-wrap canvas-narrow">
+            <canvas id="snake-canvas" width="288" height="288"></canvas>
+          </div>
+          <div class="row" style="margin-top: 0.85rem; justify-content: center">
+            <button type="button" class="primary" id="snake-start">
+              Start / Restart
+            </button>
+            <button type="button" id="snake-pause">Pause</button>
+          </div>
+          <p class="hint" style="text-align: center">
+            Arrow keys / WASD to steer · Space to pause / restart
+          </p>
+        </section>
+      </div>
     </div>
 
     <script type="module" src="wasm_loader.js"></script>
