@@ -14,7 +14,23 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_EXECUTABLE_SUFFIX .wasm)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/dist")
 
+add_library(
+  aulib_wasm STATIC
+  aulib-wasm/src/format.c)
+target_include_directories(
+  aulib_wasm
+  PUBLIC "${CMAKE_SOURCE_DIR}/aulib-wasm/include")
+target_compile_options(
+  aulib_wasm
+  PRIVATE -O2
+          -std=c11
+          -ffreestanding
+          -nostdlib
+          -fvisibility=hidden
+          -fno-builtin)
+
 add_executable(app src/main.c)
+target_link_libraries(app PRIVATE aulib_wasm)
 
 target_compile_options(
   app
@@ -57,3 +73,12 @@ add_custom_command(
           "${CMAKE_BINARY_DIR}/compile_commands.json"
           "${CMAKE_SOURCE_DIR}/compile_commands.json"
   COMMENT "compile_commands.json -> project root (clangd / C++ extension)")
+
+install(
+  TARGETS aulib_wasm
+  ARCHIVE DESTINATION lib
+  INCLUDES
+  DESTINATION include)
+install(
+  DIRECTORY "${CMAKE_SOURCE_DIR}/aulib-wasm/include/"
+  DESTINATION include)

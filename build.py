@@ -19,15 +19,16 @@ def need_exe(name: str) -> None:
 
 
 def main() -> None:
-    required_paths = [
-        ROOT / "public",
-        ROOT / "runtime" / "wasm_loader.js",
-        ROOT / "src" / "main.c",
-        ROOT / "CMakeLists.txt",
+    required = [
+        (ROOT / "public", "dir"),
+        (ROOT / "runtime" / "wasm_loader.js", "file"),
+        (ROOT / "src" / "main.c", "file"),
+        (ROOT / "CMakeLists.txt", "file"),
     ]
-    for p in required_paths:
-        if not p.exists():
-            print(f"missing: {p.relative_to(ROOT)}", file=sys.stderr)
+    for path, kind in required:
+        ok = path.is_dir() if kind == "dir" else path.is_file()
+        if not ok:
+            print(f"missing: {path.relative_to(ROOT)}", file=sys.stderr)
             sys.exit(1)
 
     need_exe("cmake")
