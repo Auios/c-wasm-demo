@@ -44,6 +44,31 @@ async function loadWasm() {
           table.get(fnIdx)();
         });
       },
+      on_input(selPtr, fnIdx) {
+        const sel = decodeCString(memory, selPtr);
+        const el = document.querySelector(sel);
+        if (!el || !instance) {
+          return;
+        }
+        const table = instance.exports.__indirect_function_table;
+        const run = () => {
+          table.get(fnIdx)();
+        };
+        el.addEventListener("input", run);
+        el.addEventListener("change", run);
+      },
+      get_input_int(selPtr) {
+        const sel = decodeCString(memory, selPtr);
+        const el = document.querySelector(sel);
+        if (!el) {
+          return 0;
+        }
+        if ("value" in el && el.value !== undefined && el.value !== "") {
+          const n = parseInt(String(el.value), 10);
+          return Number.isFinite(n) ? n : 0;
+        }
+        return 0;
+      },
     },
   };
 

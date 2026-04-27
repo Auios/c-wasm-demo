@@ -3,11 +3,327 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>WASM C Demo</title>
+    <title>aulib-wasm — C to WebAssembly</title>
+    <style>
+      :root {
+        --bg: #0a0e14;
+        --surface: #121820;
+        --surface-2: #1a222d;
+        --border: #2d3848;
+        --text: #e6edf3;
+        --muted: #8b9cb3;
+        --accent: #39d0d9;
+        --accent-dim: #2a8a90;
+        --danger: #f85149;
+        --warn: #d29922;
+        --radius: 12px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Code", "Consolas", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        color: var(--text);
+        background: var(--bg);
+        background-image: radial-gradient(
+            ellipse 120% 80% at 50% -30%,
+            rgba(57, 208, 217, 0.12),
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse 60% 40% at 100% 100%,
+            rgba(90, 100, 180, 0.08),
+            transparent 40%
+          );
+        line-height: 1.5;
+      }
+
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+
+      header {
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.65rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        background: linear-gradient(120deg, var(--text) 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      #status {
+        display: block;
+        margin-top: 1rem;
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        color: var(--accent);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-family: var(--mono);
+      }
+
+      .grid {
+        display: grid;
+        gap: 1rem;
+      }
+
+      @media (min-width: 520px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .grid .card.span-2 {
+          grid-column: span 2;
+        }
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.15rem 1.25rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      }
+
+      .card h2 {
+        margin: 0 0 0.85rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.65rem;
+      }
+
+      .stat {
+        font-family: var(--mono);
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--accent);
+        min-width: 3ch;
+      }
+
+      button {
+        font: inherit;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.5rem 0.9rem;
+        color: var(--text);
+        background: var(--surface-2);
+        transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      }
+
+      button:hover {
+        background: #242d3a;
+        border-color: var(--accent-dim);
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      button.primary {
+        background: linear-gradient(180deg, #1e3a3d 0%, #152a2c 100%);
+        border-color: var(--accent-dim);
+        color: #b5f0f3;
+      }
+
+      button.primary:hover {
+        background: linear-gradient(180deg, #254a4e 0%, #1a3336 100%);
+        border-color: var(--accent);
+      }
+
+      button.ghost {
+        background: transparent;
+        color: var(--muted);
+      }
+
+      button.danger {
+        border-color: rgba(248, 81, 73, 0.45);
+        color: #ffb4b0;
+      }
+
+      button.danger:hover {
+        background: rgba(248, 81, 73, 0.12);
+        border-color: var(--danger);
+      }
+
+      .range-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .range-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+      }
+
+      .range-readout {
+        font-family: var(--mono);
+        font-size: 1.25rem;
+        color: var(--warn);
+        min-width: 2.5ch;
+        text-align: right;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: var(--border);
+        outline: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        box-shadow: 0 0 0 2px var(--bg);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 0 2px var(--bg);
+      }
+
+      .hint {
+        margin: 0.4rem 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .foot {
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+    </style>
   </head>
   <body>
-    <p id="message"></p>
+    <div class="wrap">
+      <header>
+        <h1>aulib-wasm</h1>
+        <p>C → WebAssembly · DOM from the host</p>
+        <span id="status" role="status">Loading…</span>
+      </header>
+
+      <div class="grid">
+        <section class="card" aria-labelledby="c-counter">
+          <h2 id="c-counter">Counter</h2>
+          <div class="row">
+            <span
+              class="stat"
+              id="tap-count"
+              aria-live="polite"
+              >0</span
+            >
+            <button type="button" class="primary" id="btn">Tap</button>
+            <button type="button" class="ghost" id="btn-reset" title="Reset count">
+              Reset
+            </button>
+          </div>
+          <p class="hint">Each tap runs C code: increment + format string + set_text.</p>
+        </section>
+
+        <section class="card" aria-labelledby="c-math">
+          <h2 id="c-math">Quick actions</h2>
+          <div class="row">
+            <button type="button" id="btn-double" title="Double the count">×2</button>
+            <button type="button" id="btn-ten" title="Add 10">+10</button>
+            <button type="button" class="danger" id="btn-clear" title="Zero the count">
+              Clear
+            </button>
+          </div>
+          <p class="hint">More click handlers, same aulib <code>on_click</code> bridge.</p>
+        </section>
+
+        <section class="card span-2" aria-labelledby="c-range">
+          <h2 id="c-range">Slider</h2>
+          <div class="range-wrap">
+            <div class="range-head">
+              <span>Intensity (0–100)</span>
+              <span
+                class="range-readout"
+                id="range-value"
+                aria-live="polite"
+                >50</span
+              >
+            </div>
+            <input
+              type="range"
+              id="demo-range"
+              min="0"
+              max="100"
+              value="50"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            />
+            <p class="hint">
+              <code>on_input</code> + <code>get_input_int</code> keep the readout in sync.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <p class="foot">
+        <span class="badge">wasm32-unknown-unknown</span>
+        &nbsp;·&nbsp; Built with clang &amp; aulib-wasm
+      </p>
+    </div>
+
     <script type="module" src="wasm_loader.js"></script>
-    <button type="button" id="btn">Click me</button>
   </body>
 </html>
